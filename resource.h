@@ -33,6 +33,9 @@
 #define IDD_GAUSSIAN                    315
 #define IDD_ADD_NOISE                   316
 #define IDD_DIFFUSION                   317
+#define IDD_TRANSLATE                   318
+#define IDD_RESIZE                      319
+#define IDD_ROTATE                      320
 #define IDC_WIDTH                       1000
 #define IDC_HEIGHT                      1001
 #define IDC_IMAGE_TYPE                  1002
@@ -59,6 +62,21 @@
 #define IDC_DIFFUSION_LAMBDA            1023
 #define IDC_DIFFUSION_K                 1024
 #define IDC_DIFFUSION_ITER              1025
+#define IDC_NEW_SX                      1026
+#define IDC_NEW_SY                      1027
+#define IDC_OLD_WIDTH                   1028
+#define IDC_NEW_WIDTH                   1029
+#define IDC_SPIN_WIDTH                  1030
+#define IDC_OLD_HEIGHT                  1031
+#define IDC_NEW_HEIGHT                  1032
+#define IDC_SPIN_HEIGHT                 1033
+#define IDC_ASPECT_RATIO                1034
+#define IDC_INTERPOLATION               1035
+#define IDC_ROTATE1                     1036
+#define IDC_ROTATE2                     1037
+#define IDC_ROTATE3                     1038
+#define IDC_ROTATE4                     1039
+#define IDC_ANGLE                       1040
 #define ID_WINDOW_DUPLICATE             32771
 #define ID_VIEW_ZOOM1                   32772
 #define ID_VIEW_ZOOM2                   32773
@@ -82,14 +100,19 @@
 #define ID_ADD_NOISE                    32791
 #define ID_FILTER_MEDIAN                32792
 #define ID_FILTER_DIFFUSION             32793
+#define ID_IMAGE_TRANSLATION            32794
+#define ID_IMAGE_RESIZE                 32795
+#define ID_IMAGE_ROTATE                 32796
+#define ID_IMAGE_MIRROR                 32797
+#define ID_IMAGE_FLIP                   32798
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        318
-#define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_RESOURCE_VALUE        321
+#define _APS_NEXT_COMMAND_VALUE         32799
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

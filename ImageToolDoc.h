@@ -89,4 +89,14 @@ public:
 	afx_msg void OnUpdateFilterMedian(CCmdUI *pCmdUI);
 	afx_msg void OnFilterDiffusion();
 	afx_msg void OnUpdateFilterDiffusion(CCmdUI *pCmdUI);
+	afx_msg void OnImageTranslation();
+	afx_msg void OnUpdateImageTranslation(CCmdUI *pCmdUI);
+	afx_msg void OnImageResize();
+	afx_msg void OnUpdateImageResize(CCmdUI *pCmdUI);
+	afx_msg void OnImageRotate();
+	afx_msg void OnUpdateImageRotate(CCmdUI *pCmdUI);
+	afx_msg void OnImageMirror();
+	afx_msg void OnUpdateImageMirror(CCmdUI *pCmdUI);
+	afx_msg void OnImageFlip();
+	afx_msg void OnUpdateImageFlip(CCmdUI *pCmdUI);
 };
