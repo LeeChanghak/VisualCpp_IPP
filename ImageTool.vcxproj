@@ -75,14 +75,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>$(ProjectName)_ch09</TargetName>
+    <TargetName>$(ProjectName)_ch10</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_ch09</TargetName>
+    <TargetName>$(ProjectName)_ch10</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -197,6 +197,7 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="DiffusionDlg.h" />
     <ClInclude Include="FileNewDlg.h" />
+    <ClInclude Include="FreqFilteringDlg.h" />
     <ClInclude Include="GammaCorrectionDlg.h" />
     <ClInclude Include="GaussianDlg.h" />
     <ClInclude Include="HistogramDlg.h" />
@@ -206,7 +207,9 @@
     <ClInclude Include="IppImage\IppConvert.h" />
     <ClInclude Include="IppImage\IppDib.h" />
     <ClInclude Include="IppImage\IppEnhance.h" />
+    <ClInclude Include="IppImage\IppFeature.h" />
     <ClInclude Include="IppImage\IppFilter.h" />
+    <ClInclude Include="IppImage\IppFourier.h" />
     <ClInclude Include="IppImage\IppGeometry.h" />
     <ClInclude Include="IppImage\IppImage.h" />
     <ClInclude Include="IppImage\RGBBYTE.h" />
@@ -226,6 +229,7 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="DiffusionDlg.cpp" />
     <ClCompile Include="FileNewDlg.cpp" />
+    <ClCompile Include="FreqFilteringDlg.cpp" />
     <ClCompile Include="GammaCorrectionDlg.cpp" />
     <ClCompile Include="GaussianDlg.cpp" />
     <ClCompile Include="HistogramDlg.cpp" />
@@ -235,7 +239,9 @@
     <ClCompile Include="IppImage\IppConvert.cpp" />
     <ClCompile Include="IppImage\IppDib.cpp" />
     <ClCompile Include="IppImage\IppEnhance.cpp" />
+    <ClCompile Include="IppImage\IppFeature.cpp" />
     <ClCompile Include="IppImage\IppFilter.cpp" />
+    <ClCompile Include="IppImage\IppFourier.cpp" />
     <ClCompile Include="IppImage\IppGeometry.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="OutputWnd.cpp" />

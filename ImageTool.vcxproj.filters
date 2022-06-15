@@ -99,6 +99,15 @@
     <ClInclude Include="RotateDlg.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="IppImage\IppFourier.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="FreqFilteringDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="IppImage\IppFeature.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImageTool.cpp">
@@ -168,6 +177,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RotateDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="IppImage\IppFourier.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="FreqFilteringDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="IppImage\IppFeature.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

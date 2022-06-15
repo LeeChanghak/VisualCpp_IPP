@@ -1,14 +1,3 @@
-/******************************************************************************
- *
- * IppImage.h
- *
- * Copyright (c) 2015~<current> by Sun-Kyoo Hwang <sunkyoo.ippbook@gmail.com>
- *
- * This source code is included in the book titled "Image Processing 
- * Programming By Visual C++ (2nd Edition)"
- *
- *****************************************************************************/
-
 #pragma once
 
 #include <memory.h>

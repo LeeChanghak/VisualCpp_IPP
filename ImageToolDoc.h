@@ -99,4 +99,15 @@ public:
 	afx_msg void OnUpdateImageMirror(CCmdUI *pCmdUI);
 	afx_msg void OnImageFlip();
 	afx_msg void OnUpdateImageFlip(CCmdUI *pCmdUI);
+	afx_msg void OnFourierDft();
+	afx_msg void OnUpdateFourierDft(CCmdUI *pCmdUI);
+	afx_msg void OnFourierDftrc();
+	afx_msg void OnUpdateFourierDftrc(CCmdUI *pCmdUI);
+	afx_msg void OnFourierFft();
+	afx_msg void OnUpdateFourierFft(CCmdUI *pCmdUI);
+	afx_msg void OnFreqFiltering();
+	afx_msg void OnUpdateFreqFiltering(CCmdUI *pCmdUI);
+	afx_msg void OnEdgeRoberts();
+	afx_msg void OnEdgePrewitt();
+	afx_msg void OnEdgeSobel();
 };
