@@ -14,6 +14,9 @@
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 
+#include <algorithm>
+#include <functional>
+
 #include <propkey.h>
 
 #include "IppImage\IppImage.h"
@@ -23,6 +26,8 @@
 #include "IppImage\IppGeometry.h"
 #include "IppImage\IppFourier.h"
 #include "IppImage\IppFeature.h"
+#include "IppImage\IppColor.h"
+#include "IppImage\IppSegment.h"
 
 #include "FileNewDlg.h"
 #include "BrightnessContrastDlg.h"
@@ -36,9 +41,17 @@
 #include "ResizeDlg.h"
 #include "RotateDlg.h"
 #include "FreqFilteringDlg.h"
+#include "CannyEdgeDlg.h"
+#include "HarrisCornerDlg.h"
+#include "ColorCombineDlg.h"
+#include "BinarizationDlg.h"
 
 #define CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img) \
 	IppByteImage img; \
+	IppDibToImage(m_Dib, img);
+
+#define CONVERT_DIB_TO_RGBIMAGE(m_Dib, img) \
+	IppRgbImage img; \
 	IppDibToImage(m_Dib, img);
 
 #define CONVERT_IMAGE_TO_DIB(img, dib) \
@@ -110,8 +123,44 @@ BEGIN_MESSAGE_MAP(CImageToolDoc, CDocument)
 	ON_COMMAND(ID_FREQ_FILTERING, &CImageToolDoc::OnFreqFiltering)
 	ON_UPDATE_COMMAND_UI(ID_FREQ_FILTERING, &CImageToolDoc::OnUpdateFreqFiltering)
 	ON_COMMAND(ID_EDGE_ROBERTS, &CImageToolDoc::OnEdgeRoberts)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_ROBERTS, &CImageToolDoc::OnUpdateEdgeRoberts)
 	ON_COMMAND(ID_EDGE_PREWITT, &CImageToolDoc::OnEdgePrewitt)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_PREWITT, &CImageToolDoc::OnUpdateEdgePrewitt)
 	ON_COMMAND(ID_EDGE_SOBEL, &CImageToolDoc::OnEdgeSobel)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_SOBEL, &CImageToolDoc::OnUpdateEdgeSobel)
+	ON_COMMAND(ID_EDGE_CANNY, &CImageToolDoc::OnEdgeCanny)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_CANNY, &CImageToolDoc::OnUpdateEdgeCanny)
+	ON_COMMAND(ID_HOUGH_LINE, &CImageToolDoc::OnHoughLine)
+	ON_UPDATE_COMMAND_UI(ID_HOUGH_LINE, &CImageToolDoc::OnUpdateHoughLine)
+	ON_COMMAND(ID_HARRIS_CORNER, &CImageToolDoc::OnHarrisCorner)
+	ON_UPDATE_COMMAND_UI(ID_HARRIS_CORNER, &CImageToolDoc::OnUpdateHarrisCorner)
+	ON_COMMAND(ID_COLOR_GRAYSCALE, &CImageToolDoc::OnColorGrayscale)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_GRAYSCALE, &CImageToolDoc::OnUpdateColorGrayscale)
+	ON_COMMAND(ID_COLOR_SPLIT_RGB, &CImageToolDoc::OnColorSplitRgb)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_SPLIT_RGB, &CImageToolDoc::OnUpdateColorSplitRgb)
+	ON_COMMAND(ID_COLOR_SPLIT_HSI, &CImageToolDoc::OnColorSplitHsi)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_SPLIT_HSI, &CImageToolDoc::OnUpdateColorSplitHsi)
+	ON_COMMAND(ID_COLOR_SPLIT_YUV, &CImageToolDoc::OnColorSplitYuv)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_SPLIT_YUV, &CImageToolDoc::OnUpdateColorSplitYuv)
+	ON_COMMAND(ID_COLOR_COMBINE_RGB, &CImageToolDoc::OnColorCombineRgb)
+	ON_COMMAND(ID_COLOR_COMBINE_HSI, &CImageToolDoc::OnColorCombineHsi)
+	ON_COMMAND(ID_COLOR_COMBINE_YUV, &CImageToolDoc::OnColorCombineYuv)
+	ON_COMMAND(ID_COLOR_EDGE, &CImageToolDoc::OnColorEdge)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_EDGE, &CImageToolDoc::OnUpdateColorEdge)
+	ON_COMMAND(ID_SEGMENT_BINARIZATION, &CImageToolDoc::OnSegmentBinarization)
+	ON_UPDATE_COMMAND_UI(ID_SEGMENT_BINARIZATION, &CImageToolDoc::OnUpdateSegmentBinarization)
+	ON_COMMAND(ID_SEGMENT_LABELING, &CImageToolDoc::OnSegmentLabeling)
+	ON_UPDATE_COMMAND_UI(ID_SEGMENT_LABELING, &CImageToolDoc::OnUpdateSegmentLabeling)
+	ON_COMMAND(ID_CONTOUR_TRACING, &CImageToolDoc::OnContourTracing)
+	ON_UPDATE_COMMAND_UI(ID_CONTOUR_TRACING, &CImageToolDoc::OnUpdateContourTracing)
+	ON_COMMAND(ID_MORPHOLOGY_EROSION, &CImageToolDoc::OnMorphologyErosion)
+	ON_COMMAND(ID_MORPHOLOGY_DILATION, &CImageToolDoc::OnMorphologyDilation)
+	ON_COMMAND(ID_MORPHOLOGY_OPENING, &CImageToolDoc::OnMorphologyOpening)
+	ON_COMMAND(ID_MORPHOLOGY_CLOSING, &CImageToolDoc::OnMorphologyClosing)
+	ON_COMMAND(ID_GRAYMORPH_EROSION, &CImageToolDoc::OnGraymorphErosion)
+	ON_COMMAND(ID_GRAYMORPH_DILATION, &CImageToolDoc::OnGraymorphDilation)
+	ON_COMMAND(ID_GRAYMORPH_OPENING, &CImageToolDoc::OnGraymorphOpening)
+	ON_COMMAND(ID_GRAYMORPH_CLOSING, &CImageToolDoc::OnGraymorphClosing)
 END_MESSAGE_MAP()
 
 
@@ -282,18 +331,30 @@ void CImageToolDoc::OnEditCopy()
 
 void CImageToolDoc::OnImageInverse()
 {
-	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-	IppInverse(img);
-	CONVERT_IMAGE_TO_DIB(img, dib)
+	if (m_Dib.GetBitCount() == 8)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppInverse(img);
+		CONVERT_IMAGE_TO_DIB(img, dib)
 
-	AfxPrintInfo(_T("[반전] 입력 영상: %s"), GetTitle());
-	AfxNewBitmap(dib);
+		AfxPrintInfo(_T("[반전] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
+	else if (m_Dib.GetBitCount() == 24)
+	{
+		CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+		IppInverse(img);
+		CONVERT_IMAGE_TO_DIB(img, dib)
+
+		AfxPrintInfo(_T("[반전] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
 }
 
 
 void CImageToolDoc::OnUpdateImageInverse(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8 || m_Dib.GetBitCount() == 24);
 }
 
 
@@ -302,21 +363,40 @@ void CImageToolDoc::OnBrightnessContrast()
 	CBrightnessContrastDlg dlg;
 	if (dlg.DoModal() == IDOK)
 	{
-		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppBrightness(img, dlg.m_nBrightness);
-		IppContrast(img, dlg.m_nContrast);
-		CONVERT_IMAGE_TO_DIB(img, dib)
+		if (m_Dib.GetBitCount() == 8)
+		{
+			CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+			IppBrightness(img, dlg.m_nBrightness);
+			IppContrast(img, dlg.m_nContrast);
+			CONVERT_IMAGE_TO_DIB(img, dib)
 
-		AfxPrintInfo(_T("[밝기/명암비 조절] 입력 영상: %s, 밝기: %d, 명암비: %d%%"), 
-			GetTitle(), dlg.m_nBrightness, dlg.m_nContrast);
-		AfxNewBitmap(dib);
+			AfxPrintInfo(_T("[밝기/명암비 조절] 입력 영상: %s, 밝기: %d, 명암비: %d%%"),
+				GetTitle(), dlg.m_nBrightness, dlg.m_nContrast);
+			AfxNewBitmap(dib);
+		}
+		else if (m_Dib.GetBitCount() == 24)
+		{
+			CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+			IppByteImage imgY, imgU, imgV;
+			IppColorSplitYUV(img, imgY, imgU, imgV);
+			IppBrightness(imgY, dlg.m_nBrightness);
+			IppContrast(imgY, dlg.m_nContrast);
+
+			IppRgbImage imgRes;
+			IppColorCombineYUV(imgY, imgU, imgV, imgRes);
+			CONVERT_IMAGE_TO_DIB(imgRes, dib)
+
+			AfxPrintInfo(_T("[밝기/명암비 조절] 입력 영상: %s, 밝기: %d, 명암비: %d%%"),
+				GetTitle(), dlg.m_nBrightness, dlg.m_nContrast);
+			AfxNewBitmap(dib);
+		}
 	}
 }
 
 
 void CImageToolDoc::OnUpdateBrightnessContrast(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8 || m_Dib.GetBitCount() == 24);
 }
 
 
@@ -325,19 +405,37 @@ void CImageToolDoc::OnGammaCorrection()
 	CGammaCorrectionDlg dlg;
 	if (dlg.DoModal() == IDOK)
 	{
-		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppGammaCorrection(img, dlg.m_fGamma);
-		CONVERT_IMAGE_TO_DIB(img, dib)
+		if (m_Dib.GetBitCount() == 8)
+		{
+			CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+			IppGammaCorrection(img, dlg.m_fGamma);
+			CONVERT_IMAGE_TO_DIB(img, dib)
 
-		AfxPrintInfo(_T("[감마 보정] 입력 영상: %s, 감마: %4.2f"), GetTitle(), dlg.m_fGamma);
-		AfxNewBitmap(dib);
+			AfxPrintInfo(_T("[감마 보정] 입력 영상: %s, 감마: %4.2f"), GetTitle(), dlg.m_fGamma);
+			AfxNewBitmap(dib);
+		}
+		else if (m_Dib.GetBitCount() == 24)
+		{
+			CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+			IppByteImage imgY, imgU, imgV;
+			IppColorSplitYUV(img, imgY, imgU, imgV);
+			IppGammaCorrection(imgY, dlg.m_fGamma);
+
+			IppRgbImage imgRes;
+			IppColorCombineYUV(imgY, imgU, imgV, imgRes);
+			CONVERT_IMAGE_TO_DIB(imgRes, dib)
+
+			AfxPrintInfo(_T("[감마 보정] 입력 영상: %s, 감마: %4.2f"), GetTitle(), dlg.m_fGamma);
+			AfxNewBitmap(dib);
+
+		}
 	}
 }
 
 
 void CImageToolDoc::OnUpdateGammaCorrection(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8 || m_Dib.GetBitCount() == 24);
 }
 
 
@@ -357,35 +455,69 @@ void CImageToolDoc::OnUpdateViewHistogram(CCmdUI *pCmdUI)
 
 void CImageToolDoc::OnHistoStretching()
 {
-	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-	IppHistogramStretching(img);
-	CONVERT_IMAGE_TO_DIB(img, dib)
+	if (m_Dib.GetBitCount() == 8)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppHistogramStretching(img);
+		CONVERT_IMAGE_TO_DIB(img, dib)
 
-	AfxPrintInfo(_T("[히스토그램 스트레칭] 입력 영상: %s"), GetTitle());
-	AfxNewBitmap(dib);
+		AfxPrintInfo(_T("[히스토그램 스트레칭] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
+	else if (m_Dib.GetBitCount() == 24)
+	{
+		CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+		IppByteImage imgY, imgU, imgV;
+		IppColorSplitYUV(img, imgY, imgU, imgV);
+		IppHistogramStretching(imgY);
+
+		IppRgbImage imgRes;
+		IppColorCombineYUV(imgY, imgU, imgV, imgRes);
+		CONVERT_IMAGE_TO_DIB(imgRes, dib)
+
+		AfxPrintInfo(_T("[히스토그램 스트레칭] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
 }
 
 
 void CImageToolDoc::OnUpdateHistoStretching(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8 || m_Dib.GetBitCount() == 24);
 }
 
 
 void CImageToolDoc::OnHistoEqualization()
 {
-	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-	IppHistogramEqualization(img);
-	CONVERT_IMAGE_TO_DIB(img, dib)
+	if (m_Dib.GetBitCount() == 8)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppHistogramEqualization(img);
+		CONVERT_IMAGE_TO_DIB(img, dib)
 
-	AfxPrintInfo(_T("[히스토그램 균등화] 입력 영상: %s"), GetTitle());
-	AfxNewBitmap(dib);
+		AfxPrintInfo(_T("[히스토그램 균등화] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
+	else if (m_Dib.GetBitCount() == 24)
+	{
+		CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+		IppByteImage imgY, imgU, imgV;
+		IppColorSplitYUV(img, imgY, imgU, imgV);
+		IppHistogramEqualization(imgY);
+
+		IppRgbImage imgRes;
+		IppColorCombineYUV(imgY, imgU, imgV, imgRes);
+		CONVERT_IMAGE_TO_DIB(imgRes, dib)
+
+		AfxPrintInfo(_T("[히스토그램 균등화] 입력 영상: %s"), GetTitle());
+		AfxNewBitmap(dib);
+	}
 }
 
 
 void CImageToolDoc::OnUpdateHistoEqualization(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8 || m_Dib.GetBitCount() == 24);
 }
 
 
@@ -936,7 +1068,7 @@ void CImageToolDoc::OnFreqFiltering()
 	}
 
 	CFreqFilteringDlg dlg;
-	dlg.m_strRange.Format(_T("(0 ~ %d)"), __min(w / 2, h / 2));
+	dlg.m_strRange.Format(_T("(0 ~ %d)"), min(w / 2, h / 2));
 	if (dlg.DoModal() == IDOK)
 	{
 		CWaitCursor wait;
@@ -982,38 +1114,538 @@ void CImageToolDoc::OnUpdateFreqFiltering(CCmdUI *pCmdUI)
 }
 
 
-
 void CImageToolDoc::OnEdgeRoberts()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgeRoberts(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/로버츠] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/로버츠] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgeRoberts(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
 }
 
 
 void CImageToolDoc::OnEdgePrewitt()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgePrewitt(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/프리윗] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/프리윗] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgePrewitt(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
 }
 
 
 void CImageToolDoc::OnEdgeSobel()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgeSobel(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/소벨] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/소벨] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgeSobel(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnEdgeCanny()
+{
+	CCannyEdgeDlg dlg;
+	if (dlg.DoModal() == IDOK)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppByteImage imgEdge;
+		IppEdgeCanny(img, imgEdge, dlg.m_fSigma, dlg.m_fLowTh, dlg.m_fHighTh);
+		CONVERT_IMAGE_TO_DIB(imgEdge, dib)
+
+		AfxPrintInfo(_T("[캐니 엣지 검출] 입력 영상: %s, sigma: %4.2f, Low Th: %4.2f, High Th: %4.2f"), 
+			GetTitle(), dlg.m_fSigma, dlg.m_fLowTh, dlg.m_fHighTh);
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnUpdateEdgeCanny(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnHoughLine()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgEdge;
+	IppEdgeCanny(img, imgEdge, 1.4f, 30.f, 60.f);
+
+	std::vector<IppLineParam> lines;
+	IppHoughLine(imgEdge, lines);
+
+	if (lines.size() == 0)
+	{
+		AfxMessageBox(_T("검출된 직선이 없습니다."));
+		return;
+	}
+
+	std::sort(lines.begin(), lines.end());
+
+	// 최대 10개의 직선만 화면에 그려줌.
+	int cnt = min(10, lines.size());
+	for (int i = 0; i < cnt; i++)
+		IppDrawLine(img, lines[i], 255);
+
+	CONVERT_IMAGE_TO_DIB(img, dib)
+
+	AfxPrintInfo(_T("[허프 선 검출] 입력 영상: %s, 중요 직선: rho = %4.2f, angle = %4.2f, vote = %d"),
+		GetTitle(), lines[0].rho, (lines[0].ang*180/3.14f), lines[0].vote);
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateHoughLine(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnHarrisCorner()
+{
+	CHarrisCornerDlg dlg;
+	if (dlg.DoModal() == IDOK)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		std::vector<IppPoint> corners;
+		IppHarrisCorner(img, corners, dlg.m_nHarrisTh);
+
+		BYTE** ptr = img.GetPixels2D();
+
+		int x, y;
+		for (IppPoint cp : corners)
+		{
+			x = cp.x;
+			y = cp.y;
+
+			ptr[y - 1][x - 1] = ptr[y - 1][x] = ptr[y - 1][x + 1] = 0;
+			ptr[y][x - 1] = ptr[y][x] = ptr[y][x + 1] = 0;
+			ptr[y + 1][x - 1] = ptr[y + 1][x] = ptr[y + 1][x + 1] = 0;
+		}
+
+		CONVERT_IMAGE_TO_DIB(img, dib)
+
+		AfxPrintInfo(_T("[해리스 코너 검출] 입력 영상: %s, Threshold: %d, 검출된 코너 갯수: %d"), 
+			GetTitle(), dlg.m_nHarrisTh, corners.size());
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnUpdateHarrisCorner(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnColorGrayscale()
+{
+	CONVERT_DIB_TO_RGBIMAGE(m_Dib, imgColor)
+	IppByteImage imgGray;
+	imgGray.Convert(imgColor);
+	CONVERT_IMAGE_TO_DIB(imgGray, dib)
+
+	AfxPrintInfo(_T("[그레이스케일 변환] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateColorGrayscale(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 24);
+}
+
+
+void CImageToolDoc::OnColorSplitRgb()
+{
+	CONVERT_DIB_TO_RGBIMAGE(m_Dib, imgColor)
+	IppByteImage imgR, imgG, imgB;
+	IppColorSplitRGB(imgColor, imgR, imgG, imgB);
+	CONVERT_IMAGE_TO_DIB(imgR, dibR)
+	CONVERT_IMAGE_TO_DIB(imgG, dibG)
+	CONVERT_IMAGE_TO_DIB(imgB, dibB)
+
+	AfxPrintInfo(_T("[색상 평면 나누기/RGB] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dibR);
+	AfxNewBitmap(dibG);
+	AfxNewBitmap(dibB);
+}
+
+
+void CImageToolDoc::OnUpdateColorSplitRgb(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 24);
+}
+
+
+void CImageToolDoc::OnColorSplitHsi()
+{
+	CONVERT_DIB_TO_RGBIMAGE(m_Dib, imgColor)
+	IppByteImage imgH, imgS, imgI;
+	IppColorSplitHSI(imgColor, imgH, imgS, imgI);
+	CONVERT_IMAGE_TO_DIB(imgH, dibH)
+	CONVERT_IMAGE_TO_DIB(imgS, dibS)
+	CONVERT_IMAGE_TO_DIB(imgI, dibI)
+
+	AfxPrintInfo(_T("[색상 평면 나누기/HSI] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dibH);
+	AfxNewBitmap(dibS);
+	AfxNewBitmap(dibI);
+}
+
+
+void CImageToolDoc::OnUpdateColorSplitHsi(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 24);
+}
+
+
+void CImageToolDoc::OnColorSplitYuv()
+{
+	CONVERT_DIB_TO_RGBIMAGE(m_Dib, imgColor)
+	IppByteImage imgY, imgU, imgV;
+	IppColorSplitYUV(imgColor, imgY, imgU, imgV);
+	CONVERT_IMAGE_TO_DIB(imgY, dibY)
+	CONVERT_IMAGE_TO_DIB(imgU, dibU)
+	CONVERT_IMAGE_TO_DIB(imgV, dibV)
+
+	AfxPrintInfo(_T("[색상 평면 나누기/YUV] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dibY);
+	AfxNewBitmap(dibU);
+	AfxNewBitmap(dibV);
+}
+
+
+void CImageToolDoc::OnUpdateColorSplitYuv(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 24);
+}
+
+
+void CImageToolDoc::OnColorCombineRgb()
+{
+	CColorCombineDlg dlg;
+	dlg.m_strColorSpace = _T("RGB 색상 평면 합치기");
+	if (dlg.DoModal() == IDOK)
+	{
+		CImageToolDoc* pDoc1 = (CImageToolDoc*)dlg.m_pDoc1;
+		CImageToolDoc* pDoc2 = (CImageToolDoc*)dlg.m_pDoc2;
+		CImageToolDoc* pDoc3 = (CImageToolDoc*)dlg.m_pDoc3;
+
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc1->m_Dib, imgR)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc2->m_Dib, imgG)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc3->m_Dib, imgB)
+
+		IppRgbImage imgColor;
+		if (IppColorCombineRGB(imgR, imgG, imgB, imgColor) == false)
+		{
+			AfxMessageBox(_T("영상의 크기가 다릅니다!"));
+			return;
+		}
+
+		CONVERT_IMAGE_TO_DIB(imgColor, dib)
+
+		AfxPrintInfo(_T("[색상 평면 합치기/RGB] 입력 영상: R: %s, G: %s, B: %s"), 
+			pDoc1->GetTitle(), pDoc2->GetTitle(), pDoc3->GetTitle());
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnColorCombineHsi()
+{
+	CColorCombineDlg dlg;
+	dlg.m_strColorSpace = _T("HSI 색상 평면 합치기");
+	if (dlg.DoModal() == IDOK)
+	{
+		CImageToolDoc* pDoc1 = (CImageToolDoc*)dlg.m_pDoc1;
+		CImageToolDoc* pDoc2 = (CImageToolDoc*)dlg.m_pDoc2;
+		CImageToolDoc* pDoc3 = (CImageToolDoc*)dlg.m_pDoc3;
+
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc1->m_Dib, imgH)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc2->m_Dib, imgS)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc3->m_Dib, imgI)
+
+		IppRgbImage imgColor;
+		if (IppColorCombineHSI(imgH, imgS, imgI, imgColor) == false)
+		{
+			AfxMessageBox(_T("영상의 크기가 다릅니다!"));
+			return;
+		}
+
+		CONVERT_IMAGE_TO_DIB(imgColor, dib)
+
+		AfxPrintInfo(_T("[색상 평면 합치기/HSI] 입력 영상: H: %s, S: %s, I: %s"),
+			pDoc1->GetTitle(), pDoc2->GetTitle(), pDoc3->GetTitle());
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnColorCombineYuv()
+{
+	CColorCombineDlg dlg;
+	dlg.m_strColorSpace = _T("YUV 색상 평면 합치기");
+	if (dlg.DoModal() == IDOK)
+	{
+		CImageToolDoc* pDoc1 = (CImageToolDoc*)dlg.m_pDoc1;
+		CImageToolDoc* pDoc2 = (CImageToolDoc*)dlg.m_pDoc2;
+		CImageToolDoc* pDoc3 = (CImageToolDoc*)dlg.m_pDoc3;
+
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc1->m_Dib, imgY)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc2->m_Dib, imgU)
+		CONVERT_DIB_TO_BYTEIMAGE(pDoc3->m_Dib, imgV)
+
+		IppRgbImage imgColor;
+		if (IppColorCombineYUV(imgY, imgU, imgV, imgColor) == false)
+		{
+			AfxMessageBox(_T("영상의 크기가 다릅니다!"));
+			return;
+		}
+
+		CONVERT_IMAGE_TO_DIB(imgColor, dib)
+
+		AfxPrintInfo(_T("[색상 평면 합치기/YUV] 입력 영상: Y: %s, U: %s, V: %s"),
+			pDoc1->GetTitle(), pDoc2->GetTitle(), pDoc3->GetTitle());
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnColorEdge()
+{
+	CONVERT_DIB_TO_RGBIMAGE(m_Dib, img)
+	IppByteImage imgEdge;
+	IppColorEdge(img, imgEdge);
+	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
+
+	AfxPrintInfo(_T("[컬러 엣지 검출] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateColorEdge(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 24);
+}
+
+
+void CImageToolDoc::OnSegmentBinarization()
+{
+	CBinarizationDlg dlg;
+	dlg.SetImage(m_Dib);
+	if (dlg.DoModal() == IDOK)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppByteImage imgRes;
+		IppBinarization(img, imgRes, dlg.m_nThreshold);
+		CONVERT_IMAGE_TO_DIB(imgRes, dib)
+
+		AfxPrintInfo(_T("[이진화] 입력 영상: %s, 임계값: %d"), GetTitle(), dlg.m_nThreshold);
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnUpdateSegmentBinarization(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnSegmentLabeling()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppIntImage imgLabel;
+	std::vector<IppLabelInfo> labels;
+	int label_cnt = IppLabeling(img, imgLabel, labels);
+
+	// 객체를 감싸는 사각형 그리기
+	BYTE** ptr = img.GetPixels2D();
+	for (IppLabelInfo& info : labels)
+	{
+		for (int j = info.miny; j <= info.maxy; j++)
+			ptr[j][info.minx] = ptr[j][info.maxx] = 128;
+
+		for (int i = info.minx; i <= info.maxx; i++)
+			ptr[info.miny][i] = ptr[info.maxy][i] = 128;
+	}
+
+#if 0
+	for (IppLabelInfo& info : labels)
+	{
+		// 각각의 객체를 새 창으로 띄우기
+		IppByteImage imgObj(info.maxx - info.minx + 1, info.maxy - info.miny + 1);
+		BYTE** pObj = imgObj.GetPixels2D();
+		for (IppPoint& pt : info.pixels)
+			pObj[pt.y - info.miny][pt.x - info.minx] = 255;
+
+		CONVERT_IMAGE_TO_DIB(imgObj, dibObj)
+		AfxNewBitmap(dibObj);
+	}
+#endif
+
+	CONVERT_IMAGE_TO_DIB(img, dib)
+
+	AfxPrintInfo(_T("[레이블링] 입력 영상: %s, 객체 개수: %d"), GetTitle(), label_cnt);
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateSegmentLabeling(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnContourTracing()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppIntImage imgLabel;
+	std::vector<IppLabelInfo> labels;
+	int label_cnt = IppLabeling(img, imgLabel, labels);
+
+	IppByteImage imgContour(img.GetWidth(), img.GetHeight());
+	BYTE** ptr = imgContour.GetPixels2D();
+	for (IppLabelInfo& info : labels)
+	{
+		std::vector<IppPoint> cp;
+		IppContourTracing(img, info.pixels[0].x, info.pixels[0].y, cp);
+
+		for (IppPoint& pt : cp)
+			ptr[pt.y][pt.x] = 255;
+	}
+
+	CONVERT_IMAGE_TO_DIB(imgContour, dib)
+
+	AfxPrintInfo(_T("[외곽선 추적] 입력 영상: %s, 객체 개수: %d"), GetTitle(), label_cnt);
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateContourTracing(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnMorphologyErosion()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyErosion(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[이진 모폴로지/침식] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnMorphologyDilation()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyDilation(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[이진 모폴로지/팽창] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnMorphologyOpening()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyOpening(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[이진 모폴로지/열기] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnMorphologyClosing()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyClosing(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[이진 모폴로지/닫기] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnGraymorphErosion()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyGrayErosion(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[그레이스케일 모폴로지/침식] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnGraymorphDilation()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyGrayDilation(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[그레이스케일 모폴로지/팽창] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnGraymorphOpening()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyGrayOpening(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[그레이스케일 모폴로지/열기] 입력 영상: %s"), GetTitle());
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnGraymorphClosing()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgDst;
+	IppMorphologyGrayClosing(img, imgDst);
+	CONVERT_IMAGE_TO_DIB(imgDst, dib)
+
+	AfxPrintInfo(_T("[그레이스케일 모폴로지/닫기] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
 }
