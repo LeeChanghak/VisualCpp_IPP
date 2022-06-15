@@ -73,13 +73,9 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\ImageTool.ico"
-
 IDR_ImageToolTYPE       ICON                    "res\\ImageToolDoc.ico"
-
 IDI_OUTPUT_WND          ICON                    "res\\output_wnd.ico"
-
 IDI_OUTPUT_WND_HC       ICON                    "res\\output_wnd_hc.ico"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -87,9 +83,7 @@ IDI_OUTPUT_WND_HC       ICON                    "res\\output_wnd_hc.ico"
 //
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
-
 IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -225,7 +219,11 @@ BEGIN
         MENUITEM "산술 및 논리 연산(&A)...",           ID_ARITHMETIC_LOGICAL
         MENUITEM "비트 평면 분할(&P)",                ID_BITPLANE_SLICING
         MENUITEM SEPARATOR
-        MENUITEM "이동 변환(&T)",                   ID_IMAGE_TRANSLATION
+        MENUITEM "이동 변환(&T)...",                ID_IMAGE_TRANSLATION
+        MENUITEM "크기 변환(&S)...",                ID_IMAGE_RESIZE
+        MENUITEM "회전 변환(&R)...",                ID_IMAGE_ROTATE
+        MENUITEM "좌우 대칭(&M)",                   ID_IMAGE_MIRROR
+        MENUITEM "상하 대칭(&F)",                   ID_IMAGE_FLIP
     END
     POPUP "필터(&L)"
     BEGIN
@@ -242,12 +240,23 @@ BEGIN
         MENUITEM "미디언 필터(&E)",                  ID_FILTER_MEDIAN
         MENUITEM "비등방성 확산 필터(&D)...",           ID_FILTER_DIFFUSION
         MENUITEM SEPARATOR
+        POPUP "이산 푸리에 변환(&F)"
+        BEGIN
+            MENUITEM "&DFT",                        ID_FOURIER_DFT
+            MENUITEM "DFT&RC",                      ID_FOURIER_DFTRC
+            MENUITEM "&FFT",                        ID_FOURIER_FFT
+        END
+        MENUITEM "주파수 공간 필터링(&T)...",           ID_FREQ_FILTERING
+        MENUITEM SEPARATOR
         POPUP "마스크 기반 엣지 검출(&E)"
         BEGIN
             MENUITEM "로버츠(&R)",                     ID_EDGE_ROBERTS
             MENUITEM "프리윗(&P)",                     ID_EDGE_PREWITT
             MENUITEM "소벨(&S)",                      ID_EDGE_SOBEL
         END
+        MENUITEM "캐니 엣지 검출(&C)...",             ID_EDGE_CANNY
+        MENUITEM "허프 변환 직선 검출(&H)",             ID_HOUGH_LINE
+        MENUITEM "해리스 코너 검출(&C)...",            ID_HARRIS_CORNER
     END
     POPUP "창(&W)"
     BEGIN
@@ -451,19 +460,103 @@ BEGIN
     PUSHBUTTON      "취소",IDCANCEL,76,90,50,14
 END
 
-IDD_TRANSLATE DIALOGEX 0, 0, 188, 81
+IDD_TRANSLATE DIALOGEX 0, 0, 171, 90
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "이동 변환"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "이동 크기 설정",IDC_STATIC,7,7,174,53
-    LTEXT           "원본 영상의 (0, 0) 좌표를 아래 위치로 이동",IDC_STATIC,31,19,127,8
-    LTEXT           "&x =",IDC_STATIC,31,35,12,8
-    EDITTEXT        IDC_NEW_SX,48,33,40,14,ES_CENTER | ES_AUTOHSCROLL
-    LTEXT           "&y =",IDC_STATIC,101,35,12,8
-    EDITTEXT        IDC_NEW_SY,118,33,40,14,ES_CENTER | ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "확인",IDOK,42,60,50,14
-    PUSHBUTTON      "취소",IDCANCEL,94,60,50,14
+    GROUPBOX        "이동 크기 설정",IDC_STATIC,7,7,157,56
+    LTEXT           "원본 영상의 (0, 0) 좌표를 아래 위치로 이동.",IDC_STATIC,16,23,147,8
+    LTEXT           "&x =",IDC_STATIC,17,43,12,8
+    EDITTEXT        IDC_NEW_SX,37,40,40,14,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "&y =",IDC_STATIC,94,43,12,8
+    EDITTEXT        IDC_NEW_SY,113,40,40,14,ES_CENTER | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "확인",IDOK,33,69,50,14
+    PUSHBUTTON      "취소",IDCANCEL,87,69,50,14
+END
+
+IDD_RESIZE DIALOGEX 0, 0, 159, 127
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "크기 변환"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "영상의 크기 입력",IDC_STATIC,7,7,145,70
+    RTEXT           "가로 크기(&W):",IDC_STATIC,16,24,46,8
+    LTEXT           "1000",IDC_OLD_WIDTH,65,24,17,8
+    LTEXT           "->",IDC_STATIC,85,24,9,8
+    EDITTEXT        IDC_NEW_WIDTH,99,21,43,14,ES_CENTER | ES_AUTOHSCROLL
+    CONTROL         "",IDC_SPIN_WIDTH,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,146,21,11,14
+    RTEXT           "세로 크기(&H):",IDC_STATIC,16,43,46,8
+    LTEXT           "1000",IDC_OLD_HEIGHT,65,43,17,8
+    LTEXT           "->",IDC_STATIC,85,43,9,8
+    EDITTEXT        IDC_NEW_HEIGHT,99,40,43,14,ES_CENTER | ES_AUTOHSCROLL
+    CONTROL         "",IDC_SPIN_HEIGHT,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,146,40,11,14
+    CONTROL         "원본 영상의 가로/세로 비율 유지",IDC_ASPECT_RATIO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,62,131,10
+    LTEXT           "보간법:",IDC_STATIC,18,87,28,8
+    COMBOBOX        IDC_INTERPOLATION,49,85,94,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "확인",IDOK,32,106,50,14
+    PUSHBUTTON      "취소",IDCANCEL,86,106,50,14
+END
+
+IDD_ROTATE DIALOGEX 0, 0, 193, 95
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "회전 변환"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "회전 각도 (시계 방향)",IDC_STATIC,7,7,179,61
+    CONTROL         "&90도",IDC_ROTATE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP,19,25,32,10
+    CONTROL         "&180도",IDC_ROTATE2,"Button",BS_AUTORADIOBUTTON,75,25,36,10
+    CONTROL         "&270도",IDC_ROTATE3,"Button",BS_AUTORADIOBUTTON,135,25,36,10
+    CONTROL         "임의의 각도(&A):",IDC_ROTATE4,"Button",BS_AUTORADIOBUTTON,19,46,61,10
+    EDITTEXT        IDC_ANGLE,87,44,40,14,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "(0~360도)",IDC_STATIC,133,47,36,8
+    DEFPUSHBUTTON   "확인",IDOK,45,74,50,14
+    PUSHBUTTON      "취소",IDCANCEL,99,74,50,14
+END
+
+IDD_FREQUENCY_FILTERING DIALOGEX 0, 0, 171, 112
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "주파수 공간에서 필터링"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "필터 정보",IDC_STATIC,7,7,157,79
+    LTEXT           "필터 종류(&T):",IDC_STATIC,16,27,44,8
+    COMBOBOX        IDC_FILTER_TYPE,71,25,84,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "필터 모양(&S):",IDC_STATIC,16,46,44,8
+    COMBOBOX        IDC_FILTER_SHAPE,71,44,84,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "차단 주파수(&C):",IDC_STATIC,16,66,51,8
+    EDITTEXT        IDC_CUTOFF_FREQ,71,63,41,14,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "(0 ~ 2000)",IDC_CUTOFF_RANGE,119,66,36,8
+    DEFPUSHBUTTON   "확인",IDOK,33,91,50,14
+    PUSHBUTTON      "취소",IDCANCEL,87,91,50,14
+END
+
+IDD_CANNY_EDGE DIALOGEX 0, 0, 149, 108
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "캐니 엣지 검출기"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "계수 값 설정",IDC_STATIC,7,7,134,75
+    RTEXT           "&Sigma for Gaussian:",IDC_STATIC,20,25,63,8
+    EDITTEXT        IDC_CANNY_SIGMA,89,22,40,14,ES_CENTER | ES_AUTOHSCROLL
+    RTEXT           "&Low Threshold:",IDC_STATIC,20,43,63,8
+    EDITTEXT        IDC_LOW_THRESHOLD,89,40,40,14,ES_CENTER | ES_AUTOHSCROLL
+    RTEXT           "&High Threshold:",IDC_STATIC,20,61,63,8
+    EDITTEXT        IDC_HIGH_THRESHOLD,89,58,40,14,ES_CENTER | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "확인",IDOK,23,87,50,14
+    PUSHBUTTON      "취소",IDCANCEL,77,87,50,14
+END
+
+IDD_HARRIS_CORNER DIALOGEX 0, 0, 159, 71
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "해리스 코너 검출"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "입계값 설정",IDC_STATIC,7,7,145,38
+    LTEXT           "코너 응답 함수 임계값(&T):",IDC_STATIC,16,26,84,8
+    EDITTEXT        IDC_HARRIS_THRESHOLD,104,23,40,14,ES_CENTER | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "확인",IDOK,28,50,50,14
+    PUSHBUTTON      "취소",IDCANCEL,82,50,50,14
 END
 
 
@@ -589,9 +682,49 @@ BEGIN
     IDD_TRANSLATE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 181
+        RIGHTMARGIN, 164
         TOPMARGIN, 7
-        BOTTOMMARGIN, 74
+        BOTTOMMARGIN, 83
+    END
+
+    IDD_RESIZE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 152
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 120
+    END
+
+    IDD_ROTATE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 186
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_FREQUENCY_FILTERING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 164
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 105
+    END
+
+    IDD_CANNY_EDGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 142
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 101
+    END
+
+    IDD_HARRIS_CORNER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 152
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 64
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -647,6 +780,31 @@ BEGIN
     0
 END
 
+IDD_RESIZE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ROTATE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FREQUENCY_FILTERING AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_CANNY_EDGE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_HARRIS_CORNER AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -659,6 +817,32 @@ BEGIN
 0xd7b1, 0xb9b7, 0xccc0, 0xbabd, 0xc9c4, 0xcfc0, "\000" 
     IDC_IMAGE_TYPE, 0x403, 9, 0
 0xaec6, 0xe7b7, 0xc3c4, 0xafb7, "\000" 
+    0
+END
+
+IDD_RESIZE DLGINIT
+BEGIN
+    IDC_INTERPOLATION, 0x403, 19, 0
+0xd6c3, 0xd9b1, 0xe6b9, 0xc020, 0xbfcc, 0x20f4, 0xb8ba, 0xa3b0, 0xfdb9, 
+"\000" 
+    IDC_INTERPOLATION, 0x403, 14, 0
+0xe7be, 0xb1bc, 0xfcc7, 0xba20, 0xb0b8, 0xb9a3, 0x00fd, 
+    IDC_INTERPOLATION, 0x403, 16, 0
+0xc233, 0x20f7, 0xb8c8, 0xb1bc, 0xba20, 0xb0b8, 0xb9a3, 0x00fd, 
+    0
+END
+
+IDD_FREQUENCY_FILTERING DLGINIT
+BEGIN
+    IDC_FILTER_TYPE, 0x403, 15, 0
+0xfac0, 0xaabf, 0xc520, 0xb0eb, 0x20fa, 0xcac7, 0xcdc5, "\000" 
+    IDC_FILTER_TYPE, 0x403, 15, 0
+0xedb0, 0xaabf, 0xc520, 0xb0eb, 0x20fa, 0xcac7, 0xcdc5, "\000" 
+    IDC_FILTER_SHAPE, 0x403, 14, 0
+0xccc0, 0xf3bb, 0xfbc0, 0x4928, 0x6564, 0x6c61, 0x0029, 
+    IDC_FILTER_SHAPE, 0x403, 19, 0
+0xa1b0, 0xecbf, 0xc3bd, 0xc8be, 0x4728, 0x7561, 0x7373, 0x6169, 0x296e, 
+"\000" 
     0
 END
 

@@ -34,6 +34,11 @@
 #define IDD_ADD_NOISE                   316
 #define IDD_DIFFUSION                   317
 #define IDD_TRANSLATE                   318
+#define IDD_RESIZE                      319
+#define IDD_ROTATE                      320
+#define IDD_FREQUENCY_FILTERING         321
+#define IDD_CANNY_EDGE                  322
+#define IDD_HARRIS_CORNER               323
 #define IDC_WIDTH                       1000
 #define IDC_HEIGHT                      1001
 #define IDC_IMAGE_TYPE                  1002
@@ -62,6 +67,27 @@
 #define IDC_DIFFUSION_ITER              1025
 #define IDC_NEW_SX                      1026
 #define IDC_NEW_SY                      1027
+#define IDC_OLD_WIDTH                   1028
+#define IDC_NEW_WIDTH                   1029
+#define IDC_SPIN_WIDTH                  1030
+#define IDC_OLD_HEIGHT                  1031
+#define IDC_NEW_HEIGHT                  1032
+#define IDC_SPIN_HEIGHT                 1033
+#define IDC_ASPECT_RATIO                1034
+#define IDC_INTERPOLATION               1035
+#define IDC_ROTATE1                     1036
+#define IDC_ROTATE2                     1037
+#define IDC_ROTATE3                     1038
+#define IDC_ROTATE4                     1039
+#define IDC_ANGLE                       1040
+#define IDC_FILTER_TYPE                 1041
+#define IDC_FILTER_SHAPE                1042
+#define IDC_CUTOFF_FREQ                 1043
+#define IDC_CUTOFF_RANGE                1044
+#define IDC_CANNY_SIGMA                 1045
+#define IDC_LOW_THRESHOLD               1046
+#define IDC_HIGH_THRESHOLD              1047
+#define IDC_HARRIS_THRESHOLD            1048
 #define ID_WINDOW_DUPLICATE             32771
 #define ID_VIEW_ZOOM1                   32772
 #define ID_VIEW_ZOOM2                   32773
@@ -85,23 +111,29 @@
 #define ID_ADD_NOISE                    32791
 #define ID_FILTER_MEDIAN                32792
 #define ID_FILTER_DIFFUSION             32793
-#define ID_32794                        32794
-#define ID_IMAGE_TRANSLATION            32795
-#define ID_32796                        32796
-#define ID_32797                        32797
-#define ID_32798                        32798
-#define ID_32799                        32799
-#define ID_EDGE_ROBERTS                 32800
-#define ID_EDGE_PREWITT                 32801
-#define ID_EDGE_SOBEL                   32802
+#define ID_IMAGE_TRANSLATION            32794
+#define ID_IMAGE_RESIZE                 32795
+#define ID_IMAGE_ROTATE                 32796
+#define ID_IMAGE_MIRROR                 32797
+#define ID_IMAGE_FLIP                   32798
+#define ID_FOURIER_DFT                  32799
+#define ID_FOURIER_DFTRC                32800
+#define ID_FOURIER_FFT                  32801
+#define ID_FREQ_FILTERING               32802
+#define ID_EDGE_ROBERTS                 32803
+#define ID_EDGE_PREWITT                 32804
+#define ID_EDGE_SOBEL                   32805
+#define ID_EDGE_CANNY                   32806
+#define ID_HOUGH_LINE                   32807
+#define ID_HARRIS_CORNER                32808
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        320
-#define _APS_NEXT_COMMAND_VALUE         32803
-#define _APS_NEXT_CONTROL_VALUE         1027
+#define _APS_NEXT_RESOURCE_VALUE        324
+#define _APS_NEXT_COMMAND_VALUE         32809
+#define _APS_NEXT_CONTROL_VALUE         1049
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

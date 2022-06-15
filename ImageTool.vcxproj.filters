@@ -108,6 +108,12 @@
     <ClInclude Include="IppImage\IppFeature.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CannyEdgeDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="HarrisCornerDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImageTool.cpp">
@@ -186,6 +192,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="IppImage\IppFeature.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CannyEdgeDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="HarrisCornerDlg.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

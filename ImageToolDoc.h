@@ -108,6 +108,15 @@ public:
 	afx_msg void OnFreqFiltering();
 	afx_msg void OnUpdateFreqFiltering(CCmdUI *pCmdUI);
 	afx_msg void OnEdgeRoberts();
+	afx_msg void OnUpdateEdgeRoberts(CCmdUI *pCmdUI);
 	afx_msg void OnEdgePrewitt();
+	afx_msg void OnUpdateEdgePrewitt(CCmdUI *pCmdUI);
 	afx_msg void OnEdgeSobel();
+	afx_msg void OnUpdateEdgeSobel(CCmdUI *pCmdUI);
+	afx_msg void OnEdgeCanny();
+	afx_msg void OnUpdateEdgeCanny(CCmdUI *pCmdUI);
+	afx_msg void OnHoughLine();
+	afx_msg void OnUpdateHoughLine(CCmdUI *pCmdUI);
+	afx_msg void OnHarrisCorner();
+	afx_msg void OnUpdateHarrisCorner(CCmdUI *pCmdUI);
 };

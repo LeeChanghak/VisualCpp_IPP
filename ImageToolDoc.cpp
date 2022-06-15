@@ -14,6 +14,9 @@
 #include <mmsystem.h>
 #pragma comment(lib, "winmm.lib")
 
+#include <algorithm>
+#include <functional>
+
 #include <propkey.h>
 
 #include "IppImage\IppImage.h"
@@ -36,6 +39,8 @@
 #include "ResizeDlg.h"
 #include "RotateDlg.h"
 #include "FreqFilteringDlg.h"
+#include "CannyEdgeDlg.h"
+#include "HarrisCornerDlg.h"
 
 #define CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img) \
 	IppByteImage img; \
@@ -110,8 +115,17 @@ BEGIN_MESSAGE_MAP(CImageToolDoc, CDocument)
 	ON_COMMAND(ID_FREQ_FILTERING, &CImageToolDoc::OnFreqFiltering)
 	ON_UPDATE_COMMAND_UI(ID_FREQ_FILTERING, &CImageToolDoc::OnUpdateFreqFiltering)
 	ON_COMMAND(ID_EDGE_ROBERTS, &CImageToolDoc::OnEdgeRoberts)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_ROBERTS, &CImageToolDoc::OnUpdateEdgeRoberts)
 	ON_COMMAND(ID_EDGE_PREWITT, &CImageToolDoc::OnEdgePrewitt)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_PREWITT, &CImageToolDoc::OnUpdateEdgePrewitt)
 	ON_COMMAND(ID_EDGE_SOBEL, &CImageToolDoc::OnEdgeSobel)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_SOBEL, &CImageToolDoc::OnUpdateEdgeSobel)
+	ON_COMMAND(ID_EDGE_CANNY, &CImageToolDoc::OnEdgeCanny)
+	ON_UPDATE_COMMAND_UI(ID_EDGE_CANNY, &CImageToolDoc::OnUpdateEdgeCanny)
+	ON_COMMAND(ID_HOUGH_LINE, &CImageToolDoc::OnHoughLine)
+	ON_UPDATE_COMMAND_UI(ID_HOUGH_LINE, &CImageToolDoc::OnUpdateHoughLine)
+	ON_COMMAND(ID_HARRIS_CORNER, &CImageToolDoc::OnHarrisCorner)
+	ON_UPDATE_COMMAND_UI(ID_HARRIS_CORNER, &CImageToolDoc::OnUpdateHarrisCorner)
 END_MESSAGE_MAP()
 
 
@@ -936,7 +950,7 @@ void CImageToolDoc::OnFreqFiltering()
 	}
 
 	CFreqFilteringDlg dlg;
-	dlg.m_strRange.Format(_T("(0 ~ %d)"), __min(w / 2, h / 2));
+	dlg.m_strRange.Format(_T("(0 ~ %d)"), min(w / 2, h / 2));
 	if (dlg.DoModal() == IDOK)
 	{
 		CWaitCursor wait;
@@ -982,38 +996,151 @@ void CImageToolDoc::OnUpdateFreqFiltering(CCmdUI *pCmdUI)
 }
 
 
-
 void CImageToolDoc::OnEdgeRoberts()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgeRoberts(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/로버츠] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/로버츠] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgeRoberts(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
 }
 
 
 void CImageToolDoc::OnEdgePrewitt()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgePrewitt(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/프리윗] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/프리윗] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgePrewitt(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
 }
 
 
 void CImageToolDoc::OnEdgeSobel()
 {
 	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
-		IppByteImage imgEdge;
+	IppByteImage imgEdge;
 	IppEdgeSobel(img, imgEdge);
 	CONVERT_IMAGE_TO_DIB(imgEdge, dib)
 
-		AfxPrintInfo(_T("[마스크 기반 엣지 검출/소벨] 입력 영상: %s"), GetTitle());
+	AfxPrintInfo(_T("[마스크 기반 엣지 검출/소벨] 입력 영상: %s"), GetTitle());
 	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateEdgeSobel(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnEdgeCanny()
+{
+	CCannyEdgeDlg dlg;
+	if (dlg.DoModal() == IDOK)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		IppByteImage imgEdge;
+		IppEdgeCanny(img, imgEdge, dlg.m_fSigma, dlg.m_fLowTh, dlg.m_fHighTh);
+		CONVERT_IMAGE_TO_DIB(imgEdge, dib)
+
+		AfxPrintInfo(_T("[캐니 엣지 검출] 입력 영상: %s, sigma: %4.2f, Low Th: %4.2f, High Th: %4.2f"), 
+			GetTitle(), dlg.m_fSigma, dlg.m_fLowTh, dlg.m_fHighTh);
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnUpdateEdgeCanny(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnHoughLine()
+{
+	CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+	IppByteImage imgEdge;
+	IppEdgeCanny(img, imgEdge, 1.4f, 30.f, 60.f);
+
+	std::vector<IppLineParam> lines;
+	IppHoughLine(imgEdge, lines);
+
+	if (lines.size() == 0)
+	{
+		AfxMessageBox(_T("검출된 직선이 없습니다."));
+		return;
+	}
+
+	std::sort(lines.begin(), lines.end());
+
+	// 최대 10개의 직선만 화면에 그려줌.
+	int cnt = min(10, lines.size());
+	for (int i = 0; i < cnt; i++)
+		IppDrawLine(img, lines[i], 255);
+
+	CONVERT_IMAGE_TO_DIB(img, dib)
+
+	AfxPrintInfo(_T("[허프 선 검출] 입력 영상: %s, 중요 직선: rho = %4.2f, angle = %4.2f, vote = %d"),
+		GetTitle(), lines[0].rho, (lines[0].ang*180/3.14f), lines[0].vote);
+	AfxNewBitmap(dib);
+}
+
+
+void CImageToolDoc::OnUpdateHoughLine(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
+}
+
+
+void CImageToolDoc::OnHarrisCorner()
+{
+	CHarrisCornerDlg dlg;
+	if (dlg.DoModal() == IDOK)
+	{
+		CONVERT_DIB_TO_BYTEIMAGE(m_Dib, img)
+		std::vector<IppPoint> corners;
+		IppHarrisCorner(img, corners, dlg.m_nHarrisTh);
+
+		BYTE** ptr = img.GetPixels2D();
+
+		int x, y;
+		for (IppPoint cp : corners)
+		{
+			x = cp.x;
+			y = cp.y;
+
+			ptr[y - 1][x - 1] = ptr[y - 1][x] = ptr[y - 1][x + 1] = 0;
+			ptr[y][x - 1] = ptr[y][x] = ptr[y][x + 1] = 0;
+			ptr[y + 1][x - 1] = ptr[y + 1][x] = ptr[y + 1][x + 1] = 0;
+		}
+
+		CONVERT_IMAGE_TO_DIB(img, dib)
+
+		AfxPrintInfo(_T("[해리스 코너 검출] 입력 영상: %s, Threshold: %d, 검출된 코너 갯수: %d"), 
+			GetTitle(), dlg.m_nHarrisTh, corners.size());
+		AfxNewBitmap(dib);
+	}
+}
+
+
+void CImageToolDoc::OnUpdateHarrisCorner(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Dib.GetBitCount() == 8);
 }

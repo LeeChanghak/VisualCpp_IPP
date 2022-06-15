@@ -75,14 +75,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>$(ProjectName)_ch10</TargetName>
+    <TargetName>$(ProjectName)_ch11</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>$(ProjectName)_ch10</TargetName>
+    <TargetName>$(ProjectName)_ch11</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -194,12 +194,14 @@
     <ClInclude Include="AddNoiseDlg.h" />
     <ClInclude Include="ArithmeticLogicalDlg.h" />
     <ClInclude Include="BrightnessContrastDlg.h" />
+    <ClInclude Include="CannyEdgeDlg.h" />
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="DiffusionDlg.h" />
     <ClInclude Include="FileNewDlg.h" />
     <ClInclude Include="FreqFilteringDlg.h" />
     <ClInclude Include="GammaCorrectionDlg.h" />
     <ClInclude Include="GaussianDlg.h" />
+    <ClInclude Include="HarrisCornerDlg.h" />
     <ClInclude Include="HistogramDlg.h" />
     <ClInclude Include="ImageTool.h" />
     <ClInclude Include="ImageToolDoc.h" />
@@ -226,12 +228,14 @@
     <ClCompile Include="AddNoiseDlg.cpp" />
     <ClCompile Include="ArithmeticLogicalDlg.cpp" />
     <ClCompile Include="BrightnessContrastDlg.cpp" />
+    <ClCompile Include="CannyEdgeDlg.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="DiffusionDlg.cpp" />
     <ClCompile Include="FileNewDlg.cpp" />
     <ClCompile Include="FreqFilteringDlg.cpp" />
     <ClCompile Include="GammaCorrectionDlg.cpp" />
     <ClCompile Include="GaussianDlg.cpp" />
+    <ClCompile Include="HarrisCornerDlg.cpp" />
     <ClCompile Include="HistogramDlg.cpp" />
     <ClCompile Include="ImageTool.cpp" />
     <ClCompile Include="ImageToolDoc.cpp" />
